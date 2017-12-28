@@ -8,6 +8,11 @@ import {
 import { EntriesTableColumns } from 'app-shared/content-shared/entries-table/entries-table.component';
 import { BrowserService } from 'app-shared/kmc-shell';
 import { KalturaMediaEntry } from 'kaltura-ngx-client/api/types/KalturaMediaEntry';
+import {
+    EntriesRefineFiltersService,
+    RefineGroup
+} from 'app-shared/content-shared/entries-store/entries-refine-filters.service';
+import { AppLocalization } from '@kaltura-ng/kaltura-common';
 
 @Component({
   selector: 'kEntriesList',
@@ -16,9 +21,10 @@ import { KalturaMediaEntry } from 'kaltura-ngx-client/api/types/KalturaMediaEntr
 
 })
 export class EntriesListComponent implements OnInit, OnDestroy {
-    @Input() showReload = true;
-    @Input() isBusy = false;
-    @Input() blockerMessage: AreaBlockerMessage = null;
+    @Input() showReloadButton = true;
+    private _showLoader = false;
+    private _blockerMessage: AreaBlockerMessage = null;
+    private _refineFiltersGroups: RefineGroup[];
     @Input() selectedEntries: any[] = [];
     @Input() columns: EntriesTableColumns | null;
     @Input() rowActions: { label: string, commandName: string }[];
@@ -38,7 +44,9 @@ export class EntriesListComponent implements OnInit, OnDestroy {
     };
 
     constructor(private _entriesStore: EntriesStore,
-                private _browserService: BrowserService) {
+                private _browserService: BrowserService,
+                private _refineFilters: EntriesRefineFiltersService,
+                private _appLocalization: AppLocalization) {
     }
 
     ngOnInit() {
@@ -46,6 +54,34 @@ export class EntriesListComponent implements OnInit, OnDestroy {
     }
 
     private _prepare(): void{
+        this._showLoader = true;
+        this._refineFilters.getFilters()
+            .cancelOnDestroy(this)
+            .first() // only handle it once, no need to handle changes over time
+            .subscribe(
+                groups => {
+                    this._showLoader = false;
+                    this._refineFiltersGroups = groups;
+                    this._restoreFiltersState();
+                    this._registerToFilterStoreDataChanges();
+                },
+                error => {
+                    this._showLoader = false;
+                    this._blockerMessage = new AreaBlockerMessage({
+                        message: error.message || this._appLocalization.get('applications.content.filters.errorLoading'),
+                        buttons: [{
+                            label: this._appLocalization.get('app.common.retry'),
+                            action: () => {
+                                this._blockerMessage = null;
+                                this._prepare();
+                            }
+                        }
+                        ]
+                    })
+                });
+
+        this._refineFilters.getFilters()
+
         this._restoreFiltersState();
         this._registerToFilterStoreDataChanges();
     }

@@ -1,9 +1,12 @@
-import {Component, EventEmitter, OnDestroy, OnInit, Output} from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 
 import * as moment from 'moment';
 import {GroupedListType, ListType} from '@kaltura-ng/mc-shared/filters';
 import {EntriesFilters, EntriesStore} from 'app-shared/content-shared/entries-store/entries-store.service';
 import { AppLocalization } from '@kaltura-ng/kaltura-common';
+import {
+    RefineGroup
+} from 'app-shared/content-shared/entries-store/entries-refine-filters.service';
 
 export interface TagItem
 { type: string, value: any, label: string, tooltip: string}
@@ -21,7 +24,10 @@ export class EntriesListTagsComponent implements OnInit, OnDestroy {
     @Output() onTagsChange = new EventEmitter<void>();
 
     public _filterTags: TagItem[] = [];
-
+    @Input() set refineFilters(value: RefineGroup[]) {
+        this._prepare(value);
+    }
+    private _isReady = false;
 
     constructor(private _entriesStore: EntriesStore, private _appLocalization: AppLocalization) {
     }
@@ -69,6 +75,15 @@ export class EntriesListTagsComponent implements OnInit, OnDestroy {
 
     removeAllTags() {
         this._entriesStore.resetFilters();
+    }
+
+    private _prepare(groups: RefineGroup[]): void {
+
+        if (groups && !this._isReady) {
+            this._isReady = true;
+            this._restoreFiltersState();
+            this._registerToFilterStoreDataChanges();
+        }
     }
 
     ngOnInit() {

@@ -1,4 +1,4 @@
-<k-area-blocker [showLoader]="isBusy" [message]="blockerMessage" [bodyScroll]="true">
+<k-area-blocker [showLoader]="_showLoader" [message]="_blockerMessage" [bodyScroll]="true">
   <div class="kEntries kOverrideFAIcons">
     <div #entriesTableHolder class="kEntriesHolder kContent">
       <kSticky stickyId="entriesFilters" [scrollOffset]="80" [sticksTo]="'header'" >
@@ -36,7 +36,7 @@
               <i class="kIcondropdown_arrow_bottom dropdown"></i>
             </div>
           </div>
-          <button *ngIf="showReload"
+          <button *ngIf="showReloadButton"
                   pButton
                   class="kButtonDefault kRefreshBtn small"
                   type="text"
@@ -48,6 +48,7 @@
       <kSticky #tags [stickyClass]="'kStickyClass'" stickyId="entriesTags" [sticksTo]="'entriesFilters'">
         <div class="kContent">
             <k-entries-list-tags
+                [refineFilters]="_refineFiltersGroups"
             (onTagsChange)="onTagsChange($event)"></k-entries-list-tags>
         </div>
       </kSticky>
@@ -97,6 +98,6 @@
               [targetOffset]="{'x':-200, 'y': -15}"
               kSticky [sticksTo]="'header'" [stickyClass]="'kForceFix'" [stickyId]="'refinePopup'" [scrollOffset]="80">
   <ng-template>
-    <k-entries-refine-filters [parentPopupWidget]="refinePopup"></k-entries-refine-filters>
+    <k-entries-refine-filters [refineFilters]="_refineFiltersGroups" [parentPopupWidget]="refinePopup"></k-entries-refine-filters>
   </ng-template>
 </kPopupWidget>

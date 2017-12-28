@@ -4,7 +4,7 @@ import { GroupedListItem, ListItem, RefinePrimeTree } from '@kaltura-ng/mc-share
 import { AreaBlockerMessage } from '@kaltura-ng/kaltura-ui';
 import { environment } from 'app-environment';
 import { PopupWidgetComponent } from '@kaltura-ng/kaltura-ui/popup-widget/popup-widget.component';
-import { EntriesRefineFiltersService, RefineGroup } from './entries-refine-filters.service';
+import { RefineGroup } from '../entries-store/entries-refine-filters.service';
 import '@kaltura-ng/kaltura-common/rxjs/add/operators';
 import { ScrollToTopContainerComponent } from '@kaltura-ng/kaltura-ui/components/scroll-to-top-container.component';
 import { EntriesFilters, EntriesStore } from 'app-shared/content-shared/entries-store/entries-store.service';
@@ -54,16 +54,14 @@ export interface PrimeListsGroup {
 export class EntriesRefineFiltersComponent implements OnInit,  OnDestroy {
   @Input() parentPopupWidget: PopupWidgetComponent;
   @ViewChild(ScrollToTopContainerComponent) _treeContainer: ScrollToTopContainerComponent;
-
-  @ViewChildren(RefinePrimeTree)
-  public _primeTreesActions: RefinePrimeTree[];
-
+  @ViewChildren(RefinePrimeTree) public _primeTreesActions: RefinePrimeTree[];
+    @Input() set refineFilters(value: RefineGroup[]) {
+        this._prepare(value);
+    }
+    private _isReady = false;
   private _primeListsMap: { [key: string]: PrimeList } = {};
-
-  // properties that are exposed to the template
   public _primeListsGroups: PrimeListsGroup[] = [];
-
-  public _showLoader = false;
+  public _showLoader = true;
   public _blockerMessage: AreaBlockerMessage = null;
   public _createdFilterError: string = null;
   public _scheduledAfter: Date;
@@ -75,13 +73,12 @@ export class EntriesRefineFiltersComponent implements OnInit,  OnDestroy {
   public _createdBefore: Date;
 
 
-  constructor(private _entriesRefineFilters: EntriesRefineFiltersService,
-              private _entriesStore: EntriesStore,
+  constructor(private _entriesStore: EntriesStore,
               private _appLocalization: AppLocalization) {
   }
 
   ngOnInit() {
-      this._prepare();
+      this._showLoader = true;
   }
 
   ngOnDestroy() {
@@ -110,7 +107,7 @@ export class EntriesRefineFiltersComponent implements OnInit,  OnDestroy {
       let updatedPrimeTreeSelections = false;
       Object.keys(this._primeListsMap).forEach(listName => {
           const listData = this._primeListsMap[listName];
-          let listFilter: { value: string, label: string }[];
+          let listFilter: { value: string }[];
           if (listData.group === 'customMetadata')
           {
               const customMetadataFilter = updates['customMetadata'];
@@ -182,32 +179,13 @@ export class EntriesRefineFiltersComponent implements OnInit,  OnDestroy {
         }
     }
 
-    private _prepare(): void {
-        this._showLoader = true;
-        this._entriesRefineFilters.getFilters()
-            .cancelOnDestroy(this)
-            .first() // only handle it once, no need to handle changes over time
-            .subscribe(
-                groups => {
-                    this._showLoader = false;
-                    this._buildComponentLists(groups);
-                    this._restoreFiltersState();
-                    this._registerToFilterStoreDataChanges();
-                },
-                error => {
-                    this._showLoader = false;
-                    this._blockerMessage = new AreaBlockerMessage({
-                        message: error.message || this._appLocalization.get('applications.content.filters.errorLoading'),
-                        buttons: [{
-                            label: this._appLocalization.get('app.common.retry'),
-                            action: () => {
-                                this._blockerMessage = null;
-                                this._prepare();
-                            }
-                        }
-                        ]
-                    })
-                });
+    private _prepare(groups: RefineGroup[]): void {
+        if (groups && !this._isReady) {
+            this._showLoader = false;
+            this._buildComponentLists(groups);
+            this._restoreFiltersState();
+            this._registerToFilterStoreDataChanges();
+        }
     }
 
     private _fixPrimeTreePropagation()
@@ -379,9 +357,9 @@ export class EntriesRefineFiltersComponent implements OnInit,  OnDestroy {
                       if (!newFilterItems.find(item => item.value === selectedNode.value)) {
 
                           if (listData.group === 'customMetadata') {
-                              newFilterItems.push({value: selectedNode.value + '', label: selectedNode.label, payload: { tooltip: `${listData.items[0].label}: ${selectedNode.value}` } });
+                              newFilterItems.push({value: selectedNode.value + ''});
                           } else {
-                              newFilterItems.push({value: selectedNode.value + '', label: selectedNode.label });
+                              newFilterItems.push({value: selectedNode.value + ''});
                           }
                       }
                   });

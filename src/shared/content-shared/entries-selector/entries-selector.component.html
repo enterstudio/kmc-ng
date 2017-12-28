@@ -1,10 +1,8 @@
 <div class="kEntrySelector">
   <div class="kEntrySelectorTable" [class.kEntriesSelectorBucketOpened]="selectedEntries.length">
     <kEntriesList
-      [showReload]="false"
+      [showReloadButton]="false"
       [columns]="_columns"
-      [isBusy]="_isBusy"
-      [blockerMessage]="_blockerMessage"
       (onActionsSelected)="_onActionSelected($event)">
     </kEntriesList>
   </div>

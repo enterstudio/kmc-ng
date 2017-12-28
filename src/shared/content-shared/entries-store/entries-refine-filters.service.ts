@@ -26,7 +26,6 @@ import { KalturaResponseProfileType } from 'kaltura-ngx-client/api/types/Kaltura
 import { DefaultFiltersList } from './default-filters-list';
 
 import * as R from 'ramda';
-import { KalturaAccessControlProfile } from 'kaltura-ngx-client/api/types/KalturaAccessControlProfile';
 
 export interface RefineGroupListItem
 { value: string, label: string }
